@@ -7,9 +7,10 @@
 //
 
 #import "cocos2d.h"
-
+#import "GCHelper.h"
 #import "AppDelegate.h"
 #import "IntroLayer.h"
+#import <Parse/Parse.h>
 
 @implementation MyNavigationController
 
@@ -18,25 +19,28 @@
 // Only valid for iOS 6+. NOT VALID for iOS 4 / 5.
 -(NSUInteger)supportedInterfaceOrientations {
 	
-	// iPhone only
-	if( [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone )
-		return UIInterfaceOrientationMaskLandscape;
-	
-	// iPad only
-	return UIInterfaceOrientationMaskLandscape;
+    return UIInterfaceOrientationMaskAllButUpsideDown;
+//	// iPhone only
+//	if( [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone )
+//		return UIInterfaceOrientationMaskLandscape;
+//	
+//	// iPad only
+//	return UIInterfaceOrientationMaskLandscape;
 }
 
 // Supported orientations. Customize it for your own needs
 // Only valid on iOS 4 / 5. NOT VALID for iOS 6.
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-	// iPhone only
-	if( [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone )
-		return UIInterfaceOrientationIsLandscape(interfaceOrientation);
-	
-	// iPad only
-	// iPhone only
-	return UIInterfaceOrientationIsLandscape(interfaceOrientation);
+    return [[UIDevice currentDevice] orientation] != UIInterfaceOrientationPortrait;
+    
+//	// iPhone only
+//	if( [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone )
+//		return UIInterfaceOrientationIsLandscape(interfaceOrientation);
+//	
+//	// iPad only
+//	// iPhone only
+//	return UIInterfaceOrientationIsLandscape(interfaceOrientation);
 }
 
 // This is needed for iOS4 and iOS5 in order to ensure
@@ -59,6 +63,44 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    [Parse setApplicationId:@"hZY9b4EgIZtpKoX3KEGegRXFVZQdwr5RIBbIhvqY"
+                  clientKey:@"KE6OrZql66Ccx518lb4GdtRcVaadPjOFnVZNJ4Xd"];
+        
+    [[GCHelper sharedInstance] authenticateLocalUser];
+    
+    if ([[GameLogic sharedGameLogic] networkReachable]) {
+        if (![PFUser currentUser]) {
+            [PFAnonymousUtils logInWithBlock:^(PFUser *user, NSError *error) {
+                if (!error) {
+                    NSLog(@"Anonymous Login");
+                    
+                    PFObject *data = [PFObject objectWithClassName:@"PlayerData"];
+                    [data setObject:[NSNumber numberWithInt:0] forKey:@"OnlineTotal"];
+                    [data setObject:[NSNumber numberWithInt:0] forKey:@"OnlineWins"];
+                    [data setObject:[NSNumber numberWithInt:1] forKey:@"Experience"];
+                    [data setObject:@"Anonymous" forKey:@"DisplayName"];
+                    [data setObject:user forKey:@"user"];
+                    
+                    [data saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+                        if (succeeded) {
+                            [user setObject:data forKey:@"Data"];
+                            [[PFUser currentUser] saveInBackground];
+                            
+                            PFQuery *query = [PFQuery queryWithClassName:@"PlayerData"];
+                            [query whereKey:@"user" equalTo:[PFUser currentUser]];
+                            [GameLogic sharedGameLogic].playerData = [query getFirstObject];
+                        }
+                    }];
+                }
+            }];
+        }
+        
+        if ([GameLogic sharedGameLogic].playerData == nil && [PFUser currentUser]) {
+            PFQuery *query = [PFQuery queryWithClassName:@"PlayerData"];
+            [query whereKey:@"user" equalTo:[PFUser currentUser]];
+            [GameLogic sharedGameLogic].playerData = [query getFirstObject];
+        }
+    }
 	// Create the main window
 	window_ = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
 	
@@ -77,11 +119,11 @@
 	director_.wantsFullScreenLayout = YES;
 	
 	// Display FSP and SPF
-	[director_ setDisplayStats:YES];
+	[director_ setDisplayStats:NO];
 	
 	// set FPS at 60
 	[director_ setAnimationInterval:1.0/60];
-	
+    
 	// attach the openglView to the director
 	[director_ setView:glView];
 	
@@ -172,11 +214,12 @@
 	[[CCDirector sharedDirector] setNextDeltaTimeZero:YES];
 }
 
-- (void) dealloc
-{
-	[window_ release];
-	[navController_ release];
-	
-	[super dealloc];
+-(BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
+    return [PFFacebookUtils handleOpenURL:url];
 }
+
+-(BOOL)application:(UIApplication *)application openURL: (NSURL *) url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
+    return [PFFacebookUtils handleOpenURL:url];
+}
+
 @end

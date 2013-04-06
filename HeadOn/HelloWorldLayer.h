@@ -13,11 +13,12 @@
 #import "cocos2d.h"
 
 // HelloWorldLayer
-@interface HelloWorldLayer : CCLayer <GKAchievementViewControllerDelegate, GKLeaderboardViewControllerDelegate>
+@interface HelloWorldLayer : CCLayerColor <UITabBarDelegate, GKAchievementViewControllerDelegate, GKLeaderboardViewControllerDelegate>
 {
+    CCMenuItem *play, *resume, *invitation, *profile;
+    CCMenuItem *soundToggle, *musicToggle;
+    CCNode *popupMenu, *tutorialMenu;
 }
-
-// returns a CCScene that contains the HelloWorldLayer as the only child
 +(CCScene *) scene;
 
 @end

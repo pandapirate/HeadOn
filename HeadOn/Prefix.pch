@@ -11,4 +11,9 @@
 #ifdef __OBJC__
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
+#import "GameLogic.h"
+#import <Parse/Parse.h>
+#import "Piece.h"
+#import "cocos2d.h"
+#import "GCHelper.h"
 #endif
