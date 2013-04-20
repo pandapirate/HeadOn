@@ -85,38 +85,25 @@
         [editBtn addTarget:self action:@selector(changeName) forControlEvents:UIControlEventTouchUpInside];
         [[[CCDirector sharedDirector] view] addSubview:editBtn];
         
-        [self generateLabelWithText:@"Local Stats" atPosition:CGRectMake(15, 210, 200, 30) withSize:40 andTag:1];
-        [self generateLabelWithText:@"Online Stats" atPosition:CGRectMake(15, 310, 200, 30) withSize:40 andTag:1];
+        [self generateLabelWithText:@"Classic Game" atPosition:CGRectMake(15, 210, 200, 30) withSize:40 andTag:1];
         
-        [self generateLabelWithText:@"Wins-Losses" atPosition:CGRectMake(100, 240, 200, 30) withSize:32 andTag:1];
-        [self generateLabelWithText:@"Win Percent" atPosition:CGRectMake(100, 270, 200, 30) withSize:32 andTag:1];
-        
-        [self generateLabelWithText:@"Wins-Losses" atPosition:CGRectMake(100, 340, 200, 30) withSize:32 andTag:1];
-        [self generateLabelWithText:@"Win Percent" atPosition:CGRectMake(100, 370, 200, 30) withSize:32 andTag:1];
-        
+        [self generateLabelWithText:@"Local  Wins/Losses:" atPosition:CGRectMake(40, 240, 200, 30) withSize:32 andTag:1];
+        [self generateLabelWithText:@"Online Wins/Losses:" atPosition:CGRectMake(40, 270, 200, 30) withSize:32 andTag:1];
+                
         int localTotal = [[NSUserDefaults standardUserDefaults] integerForKey:@"Local_Total"];
         int localWins = [[GCHelper sharedInstance] totalWins];
         
         int onlineTotal = [[playerData objectForKey:@"OnlineTotal"] intValue];
         int onlineWins = [[playerData objectForKey:@"OnlineWins"] intValue];
         
-        NSString *localStat = [NSString stringWithFormat:@"%i-%i", localWins, (localTotal - localWins)];
-        NSString *onlineStat = [NSString stringWithFormat:@"%i-%i", onlineWins, (onlineTotal - onlineWins)];
+        NSString *localStat = [NSString stringWithFormat:@"%i/%i", localWins, (localTotal - localWins)];
+        NSString *onlineStat = [NSString stringWithFormat:@"%i/%i", onlineWins, (onlineTotal - onlineWins)];
         if (![[GameLogic sharedGameLogic] networkReachable])
             onlineStat = @"N/A";
         
-        [self generateLabelWithText:localStat atPosition:CGRectMake(230, 240, 80, 30) withSize:32 andTag:10];
-        [self generateLabelWithText:onlineStat atPosition:CGRectMake(230, 340, 80, 30) withSize:32 andTag:11];
-        
-        localStat = [NSString stringWithFormat:@"%.2f%%", (localTotal > 0 ? 100.0 *localWins/localTotal : 0.0)];
-        onlineStat = [NSString stringWithFormat:@"%.2f%%", (onlineTotal > 0 ? 100.0 * onlineWins /onlineTotal : 0.0)];
-
-        if (![[GameLogic sharedGameLogic] networkReachable])
-            onlineStat = @"N/A";
-        
-        [self generateLabelWithText:localStat atPosition:CGRectMake(230, 270, 100, 30) withSize:32 andTag:10];
-        [self generateLabelWithText:onlineStat atPosition:CGRectMake(230, 370, 100, 30) withSize:32 andTag:11];
-        
+        [self generateLabelWithText:localStat atPosition:CGRectMake(250, 240, 80, 30) withSize:32 andTag:10];
+        [self generateLabelWithText:onlineStat atPosition:CGRectMake(250, 270, 100, 30) withSize:32 andTag:11];
+               
         CCMenu *startMenu = [CCMenu menuWithItems:admin, nil];
         startMenu.tag = 123;
         startMenu.position = CGPointZero;

@@ -16,15 +16,18 @@
 
 @implementation ResumeLayer
 
-+ (CCScene *) scene {
++ (CCScene *) sceneWithLocal: (BOOL) local andMulti: (BOOL) multi {
     CCScene *scene = [CCScene node];
-    ResumeLayer *layer = [[ResumeLayer alloc] init];
+    ResumeLayer *layer = [[ResumeLayer alloc] initWithLocal:local andMulti:multi];
     [scene addChild:layer];
     return scene;
 }
 
-- (id) init {
+- (id) initWithLocal: (BOOL) local andMulti: (BOOL) multi {
     if ((self = [super init])) {
+        showLocal = local;
+        showMulti = multi;
+        
         CGSize size = [[CCDirector sharedDirector] winSize];
         
         CCSprite *bg;
@@ -71,15 +74,21 @@
 - (UIView *) tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
     NSString *message = @"";
     
-    switch (section) {
-        case 0:
-            message = @"Online Games";
-            break;
-        case 1:
-            message = @"Local Games";
-            break;
-        default:
-            break;
+    if (showLocal && showMulti) {
+        switch (section) {
+            case 0:
+                message = @"Online Games";
+                break;
+            case 1:
+                message = @"Local Games";
+                break;
+            default:
+                break;
+        }
+    } else if (showLocal && section == 0) {
+        message = @"Local Games";
+    } else if (showMulti && section == 0) {
+        message = @"Online Games";
     }
     
     UIView *customView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 35)];
@@ -96,18 +105,27 @@
 }
 
 - (NSInteger) numberOfSectionsInTableView:(UITableView *)tableView {
-    return 3;
+    if (showLocal && showMulti)
+        return 3;
+    else
+        return 2;
 }
 
 - (NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    switch (section) {
-        case 1:
-            return onlineGames.count;
-        case 2:
-            return localGames.count;
-        default:
-            break;
-    }
+    if (showLocal && showMulti) {
+        switch (section) {
+            case 1:
+                return onlineGames.count;
+            case 2:
+                return localGames.count;
+            default:
+                break;
+        }
+    } else if (showLocal && section == 1)
+        return localGames.count;
+    else if (showMulti && section == 1)
+        return onlineGames.count;
+    
     return 0;
 }
 
@@ -118,6 +136,8 @@
 - (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     GameCell *cell = nil;
     UIView *blankView = nil;
+
+    
     if (cell == nil){
         NSArray *noob = [[NSBundle mainBundle] loadNibNamed:@"GameCell" owner:self options:nil];
         cell = (GameCell *) [noob objectAtIndex:0];
@@ -126,22 +146,34 @@
     }
     Game *temp = nil;
     
-    switch (indexPath.section) {
-        case 2:{
-            temp = [localGames objectAtIndex:indexPath.row];
-            cell.parentDataSet = localGames;
-            break;
+    if (showLocal && showMulti) {
+        switch (indexPath.section) {
+            case 2:{
+                temp = [localGames objectAtIndex:indexPath.row];
+                cell.parentDataSet = localGames;
+                break;
+            }
+            case 1:{
+                NSData *encodedGame = [[onlineGames objectAtIndex:indexPath.row] objectForKey:@"Board"];
+                temp = (Game *)[NSKeyedUnarchiver unarchiveObjectWithData:encodedGame];
+                cell.GameObject = [onlineGames objectAtIndex:indexPath.row];
+                cell.parentDataSet = onlineGames;
+                break;
+            }
+            default:
+                break;
         }
-        case 1:{
-            NSData *encodedGame = [[onlineGames objectAtIndex:indexPath.row] objectForKey:@"Board"];
-            temp = (Game *)[NSKeyedUnarchiver unarchiveObjectWithData:encodedGame];
-            cell.GameObject = [onlineGames objectAtIndex:indexPath.row];
-            cell.parentDataSet = onlineGames;
-            break;
-        }
-        default:
-            break;
+    } else if (showLocal && indexPath.section==1) {
+        temp = [localGames objectAtIndex:indexPath.row];
+        cell.parentDataSet = localGames;
+    } else if (showMulti && indexPath.section==1) {
+        NSData *encodedGame = [[onlineGames objectAtIndex:indexPath.row] objectForKey:@"Board"];
+        temp = (Game *)[NSKeyedUnarchiver unarchiveObjectWithData:encodedGame];
+        cell.GameObject = [onlineGames objectAtIndex:indexPath.row];
+        cell.parentDataSet = onlineGames;
     }
+    
+    
     [cell setOpaque:NO];
     [cell setBackgroundColor:[UIColor clearColor]];
     
@@ -199,37 +231,40 @@
 
 
 - (void) loadData {
-    localGames = [[NSMutableArray alloc] init];
-    onlineGames = [[NSMutableArray alloc] init];
-
-    NSString *gameName = @"";
-    int counter = 1;
-    while (true) {
-        gameName = [NSString stringWithFormat:@"Game%i", counter];
-        
-        NSData *encodedGame = [[NSUserDefaults standardUserDefaults] objectForKey:gameName];
-        if (encodedGame) {
-            Game *currentGame = (Game *)[NSKeyedUnarchiver unarchiveObjectWithData:encodedGame];
-            [localGames addObject:currentGame];
-        } else if (counter > 10) {
-            break;
+    if (showLocal) {
+        localGames = [[NSMutableArray alloc] init];
+        NSString *gameName = @"";
+        int counter = 1;
+        while (true) {
+            gameName = [NSString stringWithFormat:@"Game%i", counter];
+            
+            NSData *encodedGame = [[NSUserDefaults standardUserDefaults] objectForKey:gameName];
+            if (encodedGame) {
+                Game *currentGame = (Game *)[NSKeyedUnarchiver unarchiveObjectWithData:encodedGame];
+                [localGames addObject:currentGame];
+            } else if (counter > 10) {
+                break;
+            }
+            counter++;
         }
-        counter++;
     }
     
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"Player1 = %@ OR Player2 = %@", [GameLogic sharedGameLogic].playerData, [GameLogic sharedGameLogic].playerData];
-    PFQuery *gameQuery = [PFQuery queryWithClassName:@"Game" predicate:predicate];
-    [gameQuery includeKey:@"Player1"];
-    [gameQuery includeKey:@"Player2"];
-    [gameQuery whereKey:@"CanStart" equalTo:[NSNumber numberWithBool:YES]];
-    [gameQuery whereKey:@"Ended" equalTo:[NSNumber numberWithBool:NO]];
-    [gameQuery findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
-        if (!error) {
-            [onlineGames addObjectsFromArray:objects];
-            [gamesTable reloadData];
-        }
-    }];
-    
+    if (showMulti) {
+        onlineGames = [[NSMutableArray alloc] init];
+        
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"Player1 = %@ OR Player2 = %@", [GameLogic sharedGameLogic].playerData, [GameLogic sharedGameLogic].playerData];
+        PFQuery *gameQuery = [PFQuery queryWithClassName:@"Game" predicate:predicate];
+        [gameQuery includeKey:@"Player1"];
+        [gameQuery includeKey:@"Player2"];
+        [gameQuery whereKey:@"CanStart" equalTo:[NSNumber numberWithBool:YES]];
+        [gameQuery whereKey:@"Ended" equalTo:[NSNumber numberWithBool:NO]];
+        [gameQuery findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
+            if (!error) {
+                [onlineGames addObjectsFromArray:objects];
+                [gamesTable reloadData];
+            }
+        }];
+    }
     [gamesTable reloadData];
 }
 

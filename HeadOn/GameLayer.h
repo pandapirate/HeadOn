@@ -10,11 +10,13 @@
 #import "cocos2d.h"
 #import "Piece.h"
 #import "Game.h"
+#import "Puzzle.h"
 
 @interface GameLayer : CCLayerColor {
     BOOL isMoving;
     Piece *currentPiece;
-    BOOL isPlayer1, onlineGame, onlinePlayer1, overrideMove, watchingGame, canMakeMistake;
+    BOOL isPlayer1, onlineGame, onlinePlayer1, overrideMove, watchingGame, canMakeMistake, puzzleMode;
+    int turns;
     int backgroundColor;
     int edgeLength, blobHeight1, blobHeight2;
     int startX, startY, deltaX, deltaY;
@@ -27,12 +29,16 @@
     PFObject *GameObject;
     Piece *p1Sprite, *p2Sprite;
     CGPoint p1AvatarSpot, p2AvatarSpot;
+    CCLabelTTF *turnLabel;
+    Puzzle *currentPuzzle;
 }
 
 @property (nonatomic, retain) NSMutableArray *player1Pieces;
 @property (nonatomic, retain) NSMutableArray *player2Pieces;
 @property (nonatomic, retain) NSMutableArray *allPositions;
 
++ (CCScene *) sceneFromWorld: (int) world AndLevel: (int) level;
++ (CCScene *) sceneFromPuzzle : (Puzzle *) puzzle;
 + (CCScene *) sceneFromGame : (PFObject *) gameObj isPlayer1: (BOOL) p1;
 + (CCScene *) sceneFromMemory : (int) gameNumber;
 + (CCScene *) sceneWithDifficulty : (int) difficulty andSprite: (int) sprite1 onBoard: (int) boardSize;

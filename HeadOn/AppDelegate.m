@@ -10,6 +10,7 @@
 #import "GCHelper.h"
 #import "AppDelegate.h"
 #import "IntroLayer.h"
+#import "PuzzleManager.h"
 #import <Parse/Parse.h>
 
 @implementation MyNavigationController
@@ -67,6 +68,10 @@
                   clientKey:@"KE6OrZql66Ccx518lb4GdtRcVaadPjOFnVZNJ4Xd"];
         
     [[GCHelper sharedInstance] authenticateLocalUser];
+    
+    [[PuzzleManager sharedPuzzleManager] initiatePuzzles];
+    
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"Launch"];
     
     if ([[GameLogic sharedGameLogic] networkReachable]) {
         if (![PFUser currentUser]) {

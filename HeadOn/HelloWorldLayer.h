@@ -15,9 +15,9 @@
 // HelloWorldLayer
 @interface HelloWorldLayer : CCLayerColor <UITabBarDelegate, GKAchievementViewControllerDelegate, GKLeaderboardViewControllerDelegate>
 {
-    CCMenuItem *play, *resume, *invitation, *profile;
+    CCMenuItem *puzzles, *play, *multiplayer, *profile;
     CCMenuItem *soundToggle, *musicToggle;
-    CCNode *popupMenu, *tutorialMenu;
+    CCNode *classicMenu, *tutorialMenu, *multiMenu;
 }
 +(CCScene *) scene;
 

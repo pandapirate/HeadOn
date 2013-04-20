@@ -17,6 +17,8 @@
 #import "AutoScrollLabel.h"
 #import "Game.h"
 #import "GCHelper.h"
+#import "PuzzleLevelLayer.h"
+#import "PuzzleManager.h"
 
 @implementation GameLayer
 @synthesize allPositions, player1Pieces, player2Pieces;
@@ -49,6 +51,62 @@ Qi *qi = nil;
     GameLayer *layer = [[GameLayer alloc] initWithGame:gameObj isPlayer1: p1];
     [scene addChild:layer];
     return scene;
+}
+
++ (CCScene *) sceneFromPuzzle : (Puzzle *) puzzle {
+    CCScene *scene = [CCScene node];
+    GameLayer *layer = [[GameLayer alloc] initWithPuzzle:puzzle];
+    [scene addChild:layer];
+    return scene;
+}
+
++ (CCScene *) sceneFromWorld: (int) world AndLevel: (int) level {
+    CCScene *scene = [CCScene node];
+    
+    NSString *name = [NSString stringWithFormat:@"%i-%i", world, level];
+    NSData *data = [[NSUserDefaults standardUserDefaults] objectForKey:name];
+    Puzzle *puzzle = (Puzzle *)[NSKeyedUnarchiver unarchiveObjectWithData:data];
+    
+    GameLayer *layer = [[GameLayer alloc] initWithPuzzle:puzzle];
+    [scene addChild:layer];
+    return scene;
+}
+
+// Initiate a puzzle
+- (id) initWithPuzzle: (Puzzle *) puzzle {
+    if (self = [super initWithColor:ccc4(255, 255, 255, 255)]) {
+        puzzleMode = YES;
+        currentPuzzle = puzzle;
+        player1Sprite = arc4random() % 10 + 1;
+        player2Sprite = [self randomAvatarForP2];
+
+        p1Name = [[GameLogic sharedGameLogic].playerData objectForKey:@"DisplayName"];
+        p2Name = @"Computer";
+        
+        edgeLength = puzzle.piecePositions.count;
+        
+        qi = new Qi(edgeLength, 4);
+        
+        [self setUpLabels];
+        [self setUpExistingBoard:puzzle.piecePositions];
+        
+        isPlayer1 = YES;
+        [p1Sprite jump:100];
+        
+        turns = 0;
+        
+        NSString *turnMsg = [NSString stringWithFormat:@"Turns: %i/%i", turns, puzzle.turns];
+        turnLabel = [CCLabelTTF labelWithString:turnMsg fontName:@"Vanilla Whale" fontSize:42];
+        turnLabel.color = ccc3(50,25,10);
+        if (currentPuzzle.world == 2) {
+            turnLabel.color = ccc3(250,225,10);
+        }
+        
+        turnLabel.position = ccp(WINSIZE.width/2, WINSIZE.height/2 + 215);
+        [self addChild:turnLabel];
+    }
+    
+    return self;
 }
 
 // Resume Online
@@ -114,15 +172,8 @@ Qi *qi = nil;
         onlineGame = NO;
         qi = new Qi(edgeLength, difficulty);
         player1Sprite = sprite1;
+        player2Sprite = [self randomAvatarForP2];
         canMakeMistake = YES;
-        
-        while (true) {
-            int p2 = arc4random() % 10 + 1;
-            if (p2 != sprite1) {
-                player2Sprite = p2;
-                break;
-            }
-        }
         
         p1Name = @"Anonymous";
         if ([[[GameLogic sharedGameLogic].playerData objectForKey:@"DisplayName"] length] > 0)
@@ -291,12 +342,18 @@ Qi *qi = nil;
         startY += 10;
         
         [GameLogic sharedGameLogic].navBar.hidden = YES;
-    } else
-        [[GameLogic sharedGameLogic] createBarItem:@"Head On"];
-    
+    } else {
+        if (puzzleMode)
+            [[GameLogic sharedGameLogic] createBarItem:[NSString stringWithFormat:@"Level %i - %i", currentPuzzle.world, currentPuzzle.level]];
+        else
+            [[GameLogic sharedGameLogic] createBarItem:@"Head On"];
+    }
     CGSize winSize = [[CCDirector sharedDirector] winSize];
     
     backgroundColor = arc4random() % 4 + 1;
+    if (puzzleMode)
+        backgroundColor = currentPuzzle.world;
+    
     CCSprite *bg = [CCSprite spriteWithFile:[NSString stringWithFormat:@"%i-%i.jpg", backgroundColor, edgeLength]];
     bg.position = ccp(winSize.width/2, winSize.height/2 + 3);
     [self addChild:bg];
@@ -342,6 +399,10 @@ Qi *qi = nil;
     
     AutoScrollLabel *p1NameLabel = [[AutoScrollLabel alloc] init];
     p1NameLabel.frame = CGRectMake(53, 443, 100, 28);
+    if (puzzleMode) {
+        p1NameLabel.frame = CGRectMake(53, 443, 150, 28);
+        currentPlayerMarker.visible = NO;
+    }
     p1NameLabel.textColor = [UIColor colorWithRed:50./255 green:20./255 blue:6./255 alpha:255];
     p1NameLabel.font = labelFont;
     p1NameLabel.text = p1Name;
@@ -354,21 +415,13 @@ Qi *qi = nil;
     p2Score.textColor = [UIColor colorWithRed:50./255 green:20./255 blue:6./255 alpha:255];
     p2Score.frame = CGRectMake(167, 470, 100, 28);
     [p2Score setTextAlignment:NSTextAlignmentRight];
-    [[[CCDirector sharedDirector] view] addSubview:p2Score];
+
     
     AutoScrollLabel *p2NameLabel = [[AutoScrollLabel alloc] init];
     p2NameLabel.frame = CGRectMake(167, 443, 100, 28);
     p2NameLabel.textColor = [UIColor colorWithRed:50./255 green:20./255 blue:6./255 alpha:255];
     p2NameLabel.font = labelFont;
     p2NameLabel.text = p2Name;
-    [[[CCDirector sharedDirector] view] addSubview:p2NameLabel];
-    
-    if (IS_IPHONE4) {
-        [p1Score setFrame:CGRectMake(53, 380, 100, 28)];
-        [p2Score setFrame:CGRectMake(167, 380, 100, 28)];
-        [p1NameLabel setFrame:CGRectMake(53, 353, 100, 28)];
-        [p2NameLabel setFrame:CGRectMake(167, 353, 100, 28)];
-    }
     
     p1Sprite = [[Piece alloc] init];
     p2Sprite = [[Piece alloc] init];
@@ -384,7 +437,37 @@ Qi *qi = nil;
     p1Node.position = p1AvatarSpot;
     p2Node.position = p2AvatarSpot;
     [self addChild:p1Node z: 5];
-    [self addChild:p2Node z: 5];
+
+    if (!puzzleMode) {
+        [[[CCDirector sharedDirector] view] addSubview:p2NameLabel];
+        [[[CCDirector sharedDirector] view] addSubview:p2Score];
+        [self addChild:p2Node z: 5];
+    }
+    
+    if (IS_IPHONE4) {
+        [p1Score setFrame:CGRectMake(53, 380, 100, 28)];
+        [p2Score setFrame:CGRectMake(167, 380, 100, 28)];
+        [p1NameLabel setFrame:CGRectMake(53, 353, 100, 28)];
+        [p2NameLabel setFrame:CGRectMake(167, 353, 100, 28)];
+    }
+    
+    if (puzzleMode) {
+        CCMenuItem *reset = [CCMenuItemImage itemWithNormalImage:@"reset-up.png" selectedImage:@"reset-down.png" target:self selector:@selector(goToMenuChoices:)];
+        reset.position = ccp(WINSIZE.width/2 + 75, WINSIZE.height/2 - 185);
+        
+        CCMenuItem *menu = [CCMenuItemImage itemWithNormalImage:@"menu-up.png" selectedImage:@"menu-down.png" target:self selector:@selector(goToMenuChoices:)];
+        menu.position = ccp(WINSIZE.width/2 + 125, WINSIZE.height/2 - 185);
+
+        menu.scale = 0.9;
+        reset.scale = 0.9;
+        
+        menu.tag = 1;
+        reset.tag = 2;
+        
+        CCMenu *buttons = [CCMenu menuWithItems:menu, reset, nil];
+        buttons.position = CGPointZero;
+        [self addChild:buttons z: 5];
+    }
     
     isMoving = NO;
     isPlayer1 = YES;
@@ -466,16 +549,10 @@ Qi *qi = nil;
         
         if (CGRectIntersectsRect(pieceBox, touchLocation)) {
             currentPiece = s;
-//            isMoving = YES;
-//            [s jump:1];
             currentPieceGlow.position = ccp(s.p.x, s.p.y);
             currentPieceGlow.visible = YES;
             
-//            [self runAction:[CCSequence actions:[CCDelayTime actionWithDuration:1.0],[CCCallBlock actionWithBlock:^{
-//                isMoving = NO;
-//            }], nil]];
-            
-            //            NSLog(@"Selected a Piece at: %i, %i", s.p.boardX, s.p.boardY);
+//            NSLog(@"Selected a Piece at: %i, %i", s.p.boardX, s.p.boardY);
             
             return;
         }
@@ -492,26 +569,6 @@ Qi *qi = nil;
 //    NSLog(@"%f, %f", location.x, location.y);
     
     CGRect touchLocation = CGRectMake(location.x-15, location.y-15, 30, 30);
-    
-//    for (Piece *s in (isPlayer1 ? player1Pieces : player2Pieces)) {
-//        CGRect pieceBox = CGRectMake(s.p.x - 15, s.p.y - 15, 30, 30);
-//        
-//        if (CGRectIntersectsRect(pieceBox, touchLocation)) {
-//            currentPiece = s;
-//            isMoving = YES;
-//            [s jump:1];
-//            currentPieceGlow.position = ccp(s.p.x, s.p.y);
-//            currentPieceGlow.visible = YES;
-//            
-//            [self runAction:[CCSequence actions:[CCDelayTime actionWithDuration:1.0],[CCCallBlock actionWithBlock:^{
-//                isMoving = NO;
-//            }], nil]];
-//            
-////            NSLog(@"Selected a Piece at: %i, %i", s.p.boardX, s.p.boardY);
-//            
-//            return;
-//        }
-//    }
     
     if (currentPiece) {
         Position *tempP = nil;
@@ -591,7 +648,7 @@ Qi *qi = nil;
             [[SimpleAudioEngine sharedEngine] playEffect:@"sword.aif"];
     }
     
-    if (!watchingGame) {
+    if (!watchingGame && !puzzleMode) {
         int score = isPlayer1 ? [p1Score.text intValue] : [p2Score.text intValue];
         
         if ([deletedPieces count] == 1) {
@@ -603,6 +660,12 @@ Qi *qi = nil;
             [p1Score setText:[NSString stringWithFormat:@"%i", score]];
         else
             [p2Score setText:[NSString stringWithFormat:@"%i", score]];
+    } else if (puzzleMode) {
+        int score = isPlayer1 ? [p1Score.text intValue] : [p2Score.text intValue];
+        
+        score += [deletedPieces count] * 2500;
+        if (isPlayer1)
+            [p1Score setText:[NSString stringWithFormat:@"%i", score]];
     }
     
     for (Piece *piece in deletedPieces) {
@@ -842,6 +905,11 @@ Qi *qi = nil;
                 [self recordTurnFrom:tempPos goingTo:to];
         }
         
+        if (puzzleMode && !computer) {
+            turns++;
+            [turnLabel setString:[NSString stringWithFormat:@"Turns: %i/%i", turns, currentPuzzle.turns]];
+        }
+        
         [self checkWon];
         
         if (!computer and qi)
@@ -927,15 +995,26 @@ Qi *qi = nil;
 
 - (void) checkWon {
     if (player1Pieces.count <= 1 || player2Pieces.count <= 1) {
-        int p1 = [p1Score.text intValue];
-        int p2 = [p2Score.text intValue];
-        
-        if (p1 > p2){
-            [self playAnimation:YES];
-            isMoving = YES;
+        if (!puzzleMode) {
+            int p1 = [p1Score.text intValue];
+            int p2 = [p2Score.text intValue];
+            
+            if (p1 > p2){
+                [self playAnimation:YES];
+                isMoving = YES;
+            } else {
+                [self playAnimation:NO];
+                isMoving = YES;
+            }
         } else {
-            [self playAnimation:NO];
-            isMoving = YES;
+            if (player1Pieces.count <= 1) {
+                [self playAnimation:NO];
+                isMoving = YES;
+            } else {
+                [self playAnimation:YES];
+                isMoving = YES;
+            }
+            
         }
     }
 }
@@ -946,7 +1025,7 @@ Qi *qi = nil;
     
     if (qi) {
         if (won) {
-            message = @"Congratulations \n You Win!!";
+            message = @"Congratulations!!";
         } else {
             message = @"Better Luck Next Time..";
         }
@@ -963,29 +1042,39 @@ Qi *qi = nil;
     
     CCLabelTTF *winLabel = [CCLabelTTF labelWithString:message fontName:@"Vanilla Whale" fontSize:42];
     winLabel.color = ccc3(50,25,10);
-    winLabel.position = ccp(winSize.width/2, winSize.height/2 - 45);
+    winLabel.position = ccp(winSize.width/2, winSize.height/2 + 55);
     [self addChild:winLabel z:5];
     
     Piece *p = [[Piece alloc] init];
     CCNode *pp = [p createSprite: (won ? player1Sprite : player2Sprite)];
-    pp.position = ccp(winSize.width/2 - 80, winSize.height/2 + 5);
+    pp.position = ccp(winSize.width/2 - 80, winSize.height/2 + 40);
     [self addChild:pp z: 10];
     [p jump:5];
     
-    [self recordStatistics:won];
+    if (!puzzleMode)
+        [self recordStatistics:won];
     
-    int exp = [self calculateExperienceForWinner:won];
-    NSString *expMsg = [NSString stringWithFormat:@"Experience: +%i", exp];
+    int exp = exp = [self calculateExperienceForWinner:won];;
+    NSString *expMsg = @"";
+    
+    if (puzzleMode) {
+        //NSLog(@"Total Score: %i", currentPuzzle.totalScore);
+        expMsg = [NSString stringWithFormat:@"Score: +%i", exp];
+    } else {
+        
+        expMsg = [NSString stringWithFormat:@"Experience: +%i", exp];
+    }
+    
     CCLabelTTF *expLabel = [CCLabelTTF labelWithString:expMsg fontName:@"Vanilla Whale" fontSize:42];
     expLabel.color = ccc3(50,25,10);
-    expLabel.position = ccp(winSize.width/2, winSize.height/2 - 100);
+    expLabel.position = ccp(winSize.width/2, winSize.height/2 + 20);
     
     if (backgroundColor == 2) {
         winLabel.color = ccc3(250,250,10);
         expLabel.color = ccc3(250,250,10);
     }
     
-    if (qi or onlineGame)
+    if (qi or onlineGame or puzzleMode)
         [self addChild:expLabel z:5];
     
     if (!onlineGame) {
@@ -993,14 +1082,67 @@ Qi *qi = nil;
             [[NSUserDefaults standardUserDefaults] setObject:nil forKey:currentGameName];
     }
     
-    [self runAction:
-     [CCSequence actions:
-      [CCDelayTime actionWithDuration:3],
-      [CCCallBlockN actionWithBlock:^(CCNode *node) {
-         [[GameLogic sharedGameLogic] popViews];
-         [[CCDirector sharedDirector] replaceScene:[HelloWorldLayer scene]];
-     }],
-      nil]];
+    if (!puzzleMode) {
+        [self runAction:
+         [CCSequence actions:
+          [CCDelayTime actionWithDuration:3],
+          [CCCallBlockN actionWithBlock:^(CCNode *node) {
+             [[GameLogic sharedGameLogic] popViews];
+             [[CCDirector sharedDirector] replaceScene:[HelloWorldLayer scene]];
+         }],
+          nil]];
+    } else {
+        if (exp > currentPuzzle.earnedScore) {
+            currentPuzzle.earnedScore = exp;
+            [[NSUserDefaults standardUserDefaults] setObject:[NSKeyedArchiver archivedDataWithRootObject:currentPuzzle] forKey:[NSString stringWithFormat:@"%i-%i", currentPuzzle.world, currentPuzzle.level]];
+        }
+        
+        currentPuzzle.earnedScore = exp;
+        
+        CCMenuItem *menu = [CCMenuItemImage itemWithNormalImage:@"menu-up.png" selectedImage:@"menu-down.png" target:self selector:@selector(goToMenuChoices:)];
+        menu.position = ccp(WINSIZE.width/2 - 100, WINSIZE.height/2 - 125);
+        
+        CCMenuItem *reset = [CCMenuItemImage itemWithNormalImage:@"reset-up.png" selectedImage:@"reset-down.png" target:self selector:@selector(goToMenuChoices:)];
+        reset.position = ccp(WINSIZE.width/2, WINSIZE.height/2 - 125);
+        
+        CCMenuItem *next = [CCMenuItemImage itemWithNormalImage:@"arrowup.png" selectedImage:@"arrowdown.png" target:self selector:@selector(goToMenuChoices:)];
+        next.position = ccp(WINSIZE.width/2 + 100, WINSIZE.height/2 - 125);
+        
+        menu.tag = 1;
+        reset.tag = 2;
+        next.tag = 3;
+        
+        CCMenu *buttons = [CCMenu menuWithItems:menu, reset, next, nil];
+        buttons.position = CGPointZero;
+        [self addChild:buttons z: 5];
+        
+        int numStars = [[PuzzleManager sharedPuzzleManager] calculateStarsForPuzzle:currentPuzzle];
+        CCNode *stars = [[PuzzleManager sharedPuzzleManager] drawStars:numStars];
+        stars.scale = 7.0;
+        stars.position = ccp(WINSIZE.width/2 - 100, WINSIZE.height/2 - 110);
+        [self addChild: stars z: 5];
+    }
+}
+
+- (void) goToMenuChoices: (CCMenuItem *) menu {
+    [[GameLogic sharedGameLogic] popViews];
+    switch (menu.tag) {
+        case 1:
+            [[CCDirector sharedDirector] replaceScene:[PuzzleLevelLayer sceneWithWorld:currentPuzzle.world]];
+            break;
+        case 2:
+            [[CCDirector sharedDirector] replaceScene:[GameLayer sceneFromWorld:currentPuzzle.world AndLevel:currentPuzzle.level]];
+            break;
+        case 3:
+            if (currentPuzzle.level + 1 <= 15) {
+                [[CCDirector sharedDirector] replaceScene:[GameLayer sceneFromWorld:currentPuzzle.world AndLevel:(currentPuzzle.level+1)]];
+            } else {
+                [[CCDirector sharedDirector] replaceScene:[GameLayer sceneFromWorld:currentPuzzle.world+1 AndLevel:1]];
+            }
+            break;
+        default:
+            break;
+    }
 }
 
 - (void) addPieceForPlayer1: (BOOL) player1 atLocation: (Position*) loc {
@@ -1107,6 +1249,24 @@ Qi *qi = nil;
 
 - (int) calculateExperienceForWinner: (BOOL) p1Win {
     int exp = 0;
+    
+    if (puzzleMode) {
+        exp = [p1Score.text intValue];
+        int diff = turns - 1 - currentPuzzle.turns;
+        
+        if (diff > 0) {
+            if (diff <= 1.5 * currentPuzzle.turns) {
+                exp = exp * 0.75;
+            } else if (diff > 1.5 * currentPuzzle.turns && p1Win) {
+                exp = exp * 0.35;
+            } else {
+                exp = 0;
+            }
+        }
+        
+        return exp;
+    }
+    
     if (!onlineGame) {
         if (p1Win) {
             exp += edgeLength * 300;
@@ -1161,6 +1321,32 @@ Qi *qi = nil;
         }
     }
     return exp;
+}
+
+- (int) randomAvatarForP2 {
+    int num = arc4random() % 10 + 1;
+    
+    BOOL condition = YES;
+    
+    while (condition) {
+        if (num == player1Sprite) {
+            num = arc4random() % 10 + 1;
+            continue;
+        }
+        
+        if ((player1Sprite == 1 && num == 4) || (player1Sprite == 4 && num == 1) ) {
+            num = arc4random() % 10 + 1;
+            continue;
+        }
+    
+        if ((player1Sprite == 9 && num == 10) || (player1Sprite == 10 && num == 9) ) {
+            num = arc4random() % 10 + 1;
+            continue;
+        }
+        condition = NO;
+    }
+
+    return num;
 }
 
 @end

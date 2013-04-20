@@ -18,7 +18,7 @@
 #import "OnlinePlayerLayer.h"
 #import "ProfileLayer.h"
 #import "TutorialLayer.h"
-
+#import "PuzzleLayer.h"
 #import "ResumeLayer.h"
 #import <Parse/Parse.h>
 #import "GameLogic.h"
@@ -60,6 +60,31 @@
             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"hasSound"];
             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"hasMusic"];
             [[GCHelper sharedInstance] initializeStatistics];
+        }
+        
+        // Stuff to do on every launch
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"Launch"]) {
+            [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"Launch"];
+                
+            if (![[NSUserDefaults standardUserDefaults] boolForKey:@"NameSet"]) {
+                UIAlertView *displayNameAlert = [[UIAlertView alloc] initWithTitle:@"New Display Name" message:@"Please enter preferred display name" delegate:self cancelButtonTitle:@"Continue" otherButtonTitles:nil, nil];
+                displayNameAlert.alertViewStyle = UIAlertViewStylePlainTextInput;
+                UITextField *newNameField = [displayNameAlert textFieldAtIndex:0];
+                newNameField.placeholder = @"New Display Name";
+                displayNameAlert.tag = 1;
+                [displayNameAlert show];
+            }
+            
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:@"toReview"]) {
+                UIAlertView *commentAlert = [[UIAlertView alloc] initWithTitle:@"Like the app?" message:@"" delegate:self cancelButtonTitle:@"Never Review" otherButtonTitles:@"Rate Us", nil];
+                [commentAlert addButtonWithTitle:@"Remind me later"];
+                commentAlert.tag = 2;
+                [commentAlert show];
+            }
+            
+            if ([[NSUserDefaults standardUserDefaults] objectForKey:@"toReview"] == nil) {
+                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"toReview"];
+            }
         }
         
         // ask director for the window size
@@ -121,18 +146,18 @@
             difference = 60;
         }
         
-        play = [self createMenuItem:@"Play" atPosition:ccp(-size.width/2, baseHeight) withSelector:@selector(goToPlay)];
-        resume = [self createMenuItem:@"Resume" atPosition:ccp(size.width*3/2, baseHeight - difference) withSelector:@selector(goToResume)];
-        invitation = [self createMenuItem:@"Requests" atPosition:ccp(-size.width/2, baseHeight - 2*difference) withSelector:@selector(goToInvitation)];
+        puzzles = [self createMenuItem:@"Puzzles" atPosition:ccp(-size.width/2, baseHeight) withSelector:@selector(goToPuzzles)];
+        play = [self createMenuItem:@"Classic" atPosition:ccp(size.width*3/2, baseHeight - difference) withSelector:@selector(goToPlay)];
+        multiplayer = [self createMenuItem:@"Multiplayer" atPosition:ccp(-size.width/2, baseHeight - 2*difference) withSelector:@selector(goToMultiplayer)];
         profile = [self createMenuItem:@"Profile" atPosition:ccp(size.width*3/2, baseHeight - 3*difference) withSelector:@selector(goToProfile)];
         
-        CCMenu *startMenu = [CCMenu menuWithItems:play, resume, invitation, profile, soundToggle, musicToggle, tutorial, gamecenter, leaderboard, nil];
+        CCMenu *startMenu = [CCMenu menuWithItems:play, puzzles, multiplayer, profile, soundToggle, musicToggle, tutorial, gamecenter, leaderboard, nil];
         startMenu.position = CGPointZero;
         [self addChild:startMenu z:5];
         
-        [play runAction:[CCMoveTo actionWithDuration:0.4 position:ccp(size.width/2, play.position.y)]];
-        [resume runAction:[CCSequence actions:[CCDelayTime actionWithDuration:0.4],[CCMoveTo actionWithDuration:0.4 position:ccp(size.width/2, resume.position.y)], nil]];
-        [invitation runAction:[CCSequence actions:[CCDelayTime actionWithDuration:0.8],[CCMoveTo actionWithDuration:0.4 position:ccp(size.width/2, invitation.position.y)], nil]];
+        [puzzles runAction:[CCMoveTo actionWithDuration:0.4 position:ccp(size.width/2, puzzles.position.y)]];
+        [play runAction:[CCSequence actions:[CCDelayTime actionWithDuration:0.4],[CCMoveTo actionWithDuration:0.4 position:ccp(size.width/2, play.position.y)], nil]];
+        [multiplayer runAction:[CCSequence actions:[CCDelayTime actionWithDuration:0.8],[CCMoveTo actionWithDuration:0.4 position:ccp(size.width/2, multiplayer.position.y)], nil]];
         [profile runAction:[CCSequence actions:[CCDelayTime actionWithDuration:1.2],[CCMoveTo actionWithDuration:0.4 position:ccp(size.width/2, profile.position.y)], nil]];
 
         
@@ -144,36 +169,66 @@
         
         [[GameLogic sharedGameLogic] popViews];
         
-        popupMenu = [[CCNode alloc] init];
+        classicMenu = [[CCNode alloc] init];
         CGSize boardSize = CGSizeMake(300, 300);
-        popupMenu.contentSize = boardSize;
-        popupMenu.position = ccp(-500, size.height/2-135);
+        classicMenu.contentSize = boardSize;
+        classicMenu.position = ccp(-500, size.height/2-135);
         if (IS_IPHONE4) {
-            popupMenu.position = ccp(-500, size.height/2-150);
+            classicMenu.position = ccp(-500, size.height/2-150);
         }
         
+        // classic game board
         CCSprite *board = [CCSprite spriteWithFile:@"woodboard.png"];
         board.position = ccp(boardSize.width/2, boardSize.height/2);
         board.scaleX = 2.3;
         board.scaleY = 3.0;
-        [popupMenu addChild:board z:0];
+        [classicMenu addChild:board z:0];
         
-        CCLabelTTF *modeLabel = [CCLabelTTF labelWithString:@"Select Mode" fontName:@"Vanilla Whale" fontSize:45];
+        CCLabelTTF *modeLabel = [CCLabelTTF labelWithString:@"Select Options" fontName:@"Vanilla Whale" fontSize:45];
         modeLabel.position = ccp(boardSize.width/2, boardSize.height/2 + 100);
         modeLabel.color = ccc3(50, 25, 5);
-        [popupMenu addChild:modeLabel z:2];
+        [classicMenu addChild:modeLabel z:2];
         
         CCMenuItem *onePlayer = [self createPopupMenuItem:   @"      Solo      " atPosition:ccp(boardSize.width/2, boardSize.height/2 + 52) withSelector:@selector(singlePlayer)];
-        CCMenuItem *twoPlayer = [self createPopupMenuItem:   @"  Head to Head  " atPosition:ccp(boardSize.width/2, boardSize.height/2 + 1) withSelector:@selector(twoPlayer)];
-        CCMenuItem *multiPlayer = [self createPopupMenuItem: @"   Multiplayer  " atPosition:ccp(boardSize.width/2, boardSize.height/2 - 51) withSelector:@selector(onlinePlay)];
+        CCMenuItem *twoPlayer = [self createPopupMenuItem:   @"   Head to Head   " atPosition:ccp(boardSize.width/2, boardSize.height/2 + 1) withSelector:@selector(twoPlayer)];
+        CCMenuItem *multiPlayer = [self createPopupMenuItem: @"    Resume Saved    " atPosition:ccp(boardSize.width/2, boardSize.height/2 - 51) withSelector:@selector(goToResumeLocal)];
         CCMenuItem *cancelPlayer = [self createPopupMenuItem:@"     Cancel     " atPosition:ccp(boardSize.width/2, boardSize.height/2 - 108) withSelector:@selector(cancelPopup)];
         
         CCMenu *popMenu = [CCMenu menuWithItems:onePlayer, twoPlayer, multiPlayer, cancelPlayer, nil];
         popMenu.position = CGPointZero;
-        [popupMenu addChild:popMenu z:2];
-        [self addChild:popupMenu z:10];
+        [classicMenu addChild:popMenu z:2];
+        [self addChild:classicMenu z:10];
+        
+        // Multiplayer Menu
+        multiMenu = [[CCNode alloc] init];
+        multiMenu.contentSize = boardSize;
+        multiMenu.position = ccp(1000, size.height/2-135);
+        if (IS_IPHONE4) {
+            multiMenu.position = ccp(1000, size.height/2-150);
+        }
+        
+        CCSprite *multBoard = [CCSprite spriteWithFile:@"woodboard.png"];
+        multBoard.position = ccp(boardSize.width/2, boardSize.height/2);
+        multBoard.scaleX = 2.3;
+        multBoard.scaleY = 3.0;
+        [multiMenu addChild:multBoard z:0];
+        
+        CCLabelTTF *multiLabel = [CCLabelTTF labelWithString:@"Select Options" fontName:@"Vanilla Whale" fontSize:45];
+        multiLabel.position = ccp(boardSize.width/2, boardSize.height/2 + 100);
+        multiLabel.color = ccc3(50, 25, 5);
+        [multiMenu addChild:multiLabel z:2];                   
+        CCMenuItem *findPlayers = [self createPopupMenuItem: @"   Find Players   " atPosition:ccp(boardSize.width/2, boardSize.height/2 + 52) withSelector:@selector(onlinePlay)];
+        CCMenuItem *requests = [self createPopupMenuItem:@"   Game Requests   " atPosition:ccp(boardSize.width/2, boardSize.height/2 + 1) withSelector:@selector(goToInvitation)];
+        CCMenuItem *resumeGame = [self createPopupMenuItem:@"    Resume Games    " atPosition:ccp(boardSize.width/2, boardSize.height/2 - 51) withSelector:@selector(goToResumeMulti)];
+        CCMenuItem *cancelMult = [self createPopupMenuItem:@"     Cancel      " atPosition:ccp(boardSize.width/2, boardSize.height/2 - 108) withSelector:@selector(cancelMultiplayer)];
+        
+        CCMenu *mMenu = [CCMenu menuWithItems:findPlayers, requests, resumeGame, cancelMult, nil];
+        mMenu.position = CGPointZero;
+        [multiMenu addChild:mMenu z:2];
+        [self addChild:multiMenu z:10];
         
         
+        // Tutorial Menu
         tutorialMenu = [[CCNode alloc] init];
         tutorialMenu.contentSize = boardSize;
         tutorialMenu.position = ccp(1000, size.height/2-135);
@@ -187,7 +242,7 @@
         tutBoard.scaleY = 3.0;
         [tutorialMenu addChild:tutBoard z:0];
         
-        CCLabelTTF *tutLabel = [CCLabelTTF labelWithString:@"Tutorials" fontName:@"Vanilla Whale" fontSize:45];
+        CCLabelTTF *tutLabel = [CCLabelTTF labelWithString:@"Select Tutorial" fontName:@"Vanilla Whale" fontSize:45];
         tutLabel.position = ccp(boardSize.width/2, boardSize.height/2 + 100);
         tutLabel.color = ccc3(50, 25, 5);
         [tutorialMenu addChild:tutLabel z:2];
@@ -201,6 +256,8 @@
         [tutorialMenu addChild:tutMenu z:2];
         [self addChild:tutorialMenu z:10];
         
+        
+        // Random Walkers
         [self runAction:[CCRepeatForever actionWithAction:[CCSequence actions:[CCDelayTime actionWithDuration:(arc4random() % 3 + 1)],[CCCallBlock actionWithBlock:^{
             [self addRandomWalker];
         }], nil]]];
@@ -276,11 +333,11 @@
 
 - (void) cancelPopup {
     play.isEnabled = YES;
-    resume.isEnabled = YES;
-    invitation.isEnabled = YES;
+    puzzles.isEnabled = YES;
+    multiplayer.isEnabled = YES;
     profile.isEnabled = YES;
     
-    [popupMenu runAction:[CCMoveTo actionWithDuration:0.5 position:ccp(-500, popupMenu.position.y)]];
+    [classicMenu runAction:[CCMoveTo actionWithDuration:0.5 position:ccp(-500, classicMenu.position.y)]];
 }
 
 - (void) gameplayTutorial {
@@ -300,28 +357,51 @@
 
 - (void) cancelTutorial {
     play.isEnabled = YES;
-    resume.isEnabled = YES;
-    invitation.isEnabled = YES;
+    puzzles.isEnabled = YES;
+    multiplayer.isEnabled = YES;
     profile.isEnabled = YES;
     
-    [tutorialMenu runAction:[CCMoveTo actionWithDuration:0.5 position:ccp(1000, popupMenu.position.y)]];
+    [tutorialMenu runAction:[CCMoveTo actionWithDuration:0.5 position:ccp(1000, tutorialMenu.position.y)]];
+}
+
+- (void) cancelMultiplayer {
+    play.isEnabled = YES;
+    puzzles.isEnabled = YES;
+    multiplayer.isEnabled = YES;
+    profile.isEnabled = YES;
+    
+    [multiMenu runAction:[CCMoveTo actionWithDuration:0.5 position:ccp(1000, multiMenu.position.y)]];
+}
+
+- (void) goToPuzzles {
+    [[GameLogic sharedGameLogic] setTabBarSelection:-1];
+    [[CCDirector sharedDirector] pushScene:[PuzzleLayer sceneWithPageNumber:1]];
 }
 
 - (void) goToPlay {
     CGSize size = [[CCDirector sharedDirector] winSize];
-    [popupMenu runAction:[CCMoveTo actionWithDuration:0.5 position:ccp(size.width/2-150, popupMenu.position.y)]];
+    [classicMenu runAction:[CCMoveTo actionWithDuration:0.5 position:ccp(size.width/2-150, classicMenu.position.y)]];
     play.isEnabled = NO;
-    resume.isEnabled = NO;
-    invitation.isEnabled = NO;
+    puzzles.isEnabled = NO;
+    multiplayer.isEnabled = NO;
     profile.isEnabled = NO;
 }
 
 - (void) goToTutorial{
     CGSize size = [[CCDirector sharedDirector] winSize];
-    [tutorialMenu runAction:[CCMoveTo actionWithDuration:0.5 position:ccp(size.width/2-150, popupMenu.position.y)]];
+    [tutorialMenu runAction:[CCMoveTo actionWithDuration:0.5 position:ccp(size.width/2-150, tutorialMenu.position.y)]];
     play.isEnabled = NO;
-    resume.isEnabled = NO;
-    invitation.isEnabled = NO;
+    puzzles.isEnabled = NO;
+    multiplayer.isEnabled = NO;
+    profile.isEnabled = NO;
+}
+
+- (void) goToMultiplayer{
+    CGSize size = [[CCDirector sharedDirector] winSize];
+    [multiMenu runAction:[CCMoveTo actionWithDuration:0.5 position:ccp(size.width/2-150, multiMenu.position.y)]];
+    play.isEnabled = NO;
+    puzzles.isEnabled = NO;
+    multiplayer.isEnabled = NO;
     profile.isEnabled = NO;
 }
 
@@ -330,9 +410,14 @@
     [[CCDirector sharedDirector] pushScene:[ProfileLayer scene]];
 }
 
-- (void) goToResume{
+- (void) goToResumeLocal{
     [[GameLogic sharedGameLogic] setTabBarSelection:1];
-    [[CCDirector sharedDirector] pushScene:[ResumeLayer scene]];
+    [[CCDirector sharedDirector] pushScene:[ResumeLayer sceneWithLocal:YES andMulti:NO]];
+}
+
+- (void) goToResumeMulti{
+    [[GameLogic sharedGameLogic] setTabBarSelection:1];
+    [[CCDirector sharedDirector] pushScene:[ResumeLayer sceneWithLocal:NO andMulti:YES]];
 }
 
 - (void) goToInvitation{
@@ -411,6 +496,44 @@
     [self runAction:[CCSequence actions:[CCDelayTime actionWithDuration:duration],[CCCallBlock actionWithBlock:^{
         [self removeChild:node];
     }], nil]];
+}
+
+- (void) alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
+    
+    if (alertView.tag == 1) {
+        NSString *newName = [[alertView textFieldAtIndex:0] text];
+        
+        if (newName.length > 3) {
+            PFObject *playerData = [GameLogic sharedGameLogic].playerData;
+            [playerData setObject:newName forKey:@"DisplayName"];
+            [playerData saveInBackground];
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NameSet"];
+        } else {
+            UIAlertView *displayNameAlert = [[UIAlertView alloc] initWithTitle:@"New Display Name" message:@"Display name must have at least 4 characters" delegate:self cancelButtonTitle:@"Continue" otherButtonTitles:nil, nil];
+            displayNameAlert.alertViewStyle = UIAlertViewStylePlainTextInput;
+            UITextField *newNameField = [displayNameAlert textFieldAtIndex:0];
+            newNameField.placeholder = @"New Display Name";
+            displayNameAlert.tag = 1;
+            [displayNameAlert show];
+        }
+    }
+    
+    if (alertView.tag == 2) {
+        switch (buttonIndex) {
+            case 0: {
+                [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"toReview"];
+                break;
+            }
+            case 1: {
+                NSURL *url = [NSURL URLWithString:@"http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?id=598153431&pageNumber=0&sortOrdering=1&type=Purple+Software&mt=8"];
+                [[UIApplication sharedApplication] openURL:url];
+                [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"toReview"];
+                break;
+            }
+            default:
+                break;
+        }
+    }
 }
 
 #pragma mark GameKit delegate

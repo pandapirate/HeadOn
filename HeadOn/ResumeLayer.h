@@ -17,6 +17,7 @@
     
     EGORefreshTableHeaderView *_refreshHeaderView;
 	BOOL _reloading;
+    BOOL showLocal, showMulti;
 }
-+(CCScene *) scene;
++(CCScene *) sceneWithLocal: (BOOL) local andMulti: (BOOL) multi;
 @end

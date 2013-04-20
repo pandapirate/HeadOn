@@ -175,7 +175,7 @@ static GameLogic *sharedGameLogic = nil;
     _ResumeButton.selected = YES;
     _ProfileButton.selected = NO;
     
-    [[CCDirector sharedDirector] replaceScene:[ResumeLayer scene]];
+    [[CCDirector sharedDirector] replaceScene:[ResumeLayer sceneWithLocal:YES andMulti:YES]];
 }
 
 - (void) goToProfile {
