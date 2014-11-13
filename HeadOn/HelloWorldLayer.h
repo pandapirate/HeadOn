@@ -18,6 +18,9 @@
     CCMenuItem *puzzles, *play, *multiplayer, *profile;
     CCMenuItem *soundToggle, *musicToggle;
     CCNode *classicMenu, *tutorialMenu, *multiMenu;
+    int localCount, multiCount, requestCount;
+    CCSprite *localCountSprite, *multiCountSprite, *requestCountSprite;
+    CCLabelTTF *localCountLabel, *multiCountLabel, *requestCountLabel;
 }
 +(CCScene *) scene;
 

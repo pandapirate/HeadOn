@@ -18,6 +18,7 @@
 #import "Game.h"
 #import "GCHelper.h"
 #import "PuzzleLevelLayer.h"
+#import "PuzzleLayer.h"
 #import "PuzzleManager.h"
 
 @implementation GameLayer
@@ -81,6 +82,8 @@ Qi *qi = nil;
         player2Sprite = [self randomAvatarForP2];
 
         p1Name = [[GameLogic sharedGameLogic].playerData objectForKey:@"DisplayName"];
+        if ([p1Name length] == 0)
+            p1Name = @"N/A";
         p2Name = @"Computer";
         
         edgeLength = puzzle.piecePositions.count;
@@ -96,14 +99,18 @@ Qi *qi = nil;
         turns = 0;
         
         NSString *turnMsg = [NSString stringWithFormat:@"Turns: %i/%i", turns, puzzle.turns];
-        turnLabel = [CCLabelTTF labelWithString:turnMsg fontName:@"Vanilla Whale" fontSize:42];
-        turnLabel.color = ccc3(50,25,10);
-        if (currentPuzzle.world == 2) {
-            turnLabel.color = ccc3(250,225,10);
-        }
         
-        turnLabel.position = ccp(WINSIZE.width/2, WINSIZE.height/2 + 215);
-        [self addChild:turnLabel];
+        turnLabel = [[UILabel alloc] init];
+        turnLabel.text = turnMsg;
+        turnLabel.textColor = [UIColor colorWithRed:50./255 green:20./255 blue:6./255 alpha:255];
+        turnLabel.frame = CGRectMake(53, 470, 150, 28);
+        turnLabel.font = [UIFont fontWithName:@"BoisterBlack" size:20];
+        turnLabel.backgroundColor = [UIColor clearColor];
+        [[[CCDirector sharedDirector] view] addSubview:turnLabel];
+        
+        if (IS_IPHONE4) {
+            turnLabel.frame = CGRectMake(53, 380, 150, 28);
+        }
     }
     
     return self;
@@ -395,7 +402,7 @@ Qi *qi = nil;
     p1Score.frame = CGRectMake(53, 470, 100, 28);
     p1Score.font = labelFont;
     p1Score.backgroundColor = [UIColor clearColor];
-    [[[CCDirector sharedDirector] view] addSubview:p1Score];
+    
     
     AutoScrollLabel *p1NameLabel = [[AutoScrollLabel alloc] init];
     p1NameLabel.frame = CGRectMake(53, 443, 100, 28);
@@ -441,14 +448,8 @@ Qi *qi = nil;
     if (!puzzleMode) {
         [[[CCDirector sharedDirector] view] addSubview:p2NameLabel];
         [[[CCDirector sharedDirector] view] addSubview:p2Score];
+        [[[CCDirector sharedDirector] view] addSubview:p1Score];
         [self addChild:p2Node z: 5];
-    }
-    
-    if (IS_IPHONE4) {
-        [p1Score setFrame:CGRectMake(53, 380, 100, 28)];
-        [p2Score setFrame:CGRectMake(167, 380, 100, 28)];
-        [p1NameLabel setFrame:CGRectMake(53, 353, 100, 28)];
-        [p2NameLabel setFrame:CGRectMake(167, 353, 100, 28)];
     }
     
     if (puzzleMode) {
@@ -467,6 +468,25 @@ Qi *qi = nil;
         CCMenu *buttons = [CCMenu menuWithItems:menu, reset, nil];
         buttons.position = CGPointZero;
         [self addChild:buttons z: 5];
+        
+        if (IS_IPHONE4) {
+            reset.position = ccp(WINSIZE.width/2 + 75, WINSIZE.height/2 - 140);
+            menu.position = ccp(WINSIZE.width/2 + 125, WINSIZE.height/2 - 140);
+        }
+    }
+    
+    if (IS_IPHONE4) {
+        [p1Score setFrame:CGRectMake(53, 380, 100, 28)];
+        [p2Score setFrame:CGRectMake(167, 380, 100, 28)];
+        
+        if (puzzleMode) {
+            p1NameLabel.frame = CGRectMake(53, 353, 150, 28);
+        } else {
+            [p1NameLabel setFrame:CGRectMake(53, 353, 100, 28)];
+        }
+        
+        [p2NameLabel setFrame:CGRectMake(167, 353, 100, 28)];
+        [p1NameLabel setText:p1Name];
     }
     
     isMoving = NO;
@@ -907,7 +927,8 @@ Qi *qi = nil;
         
         if (puzzleMode && !computer) {
             turns++;
-            [turnLabel setString:[NSString stringWithFormat:@"Turns: %i/%i", turns, currentPuzzle.turns]];
+            
+            [turnLabel setText:[NSString stringWithFormat:@"Turns: %i/%i", turns, currentPuzzle.turns]];
         }
         
         [self checkWon];
@@ -1024,18 +1045,9 @@ Qi *qi = nil;
     NSString * message;
     
     if (qi) {
-        if (won) {
-            message = @"Congratulations!!";
-        } else {
-            message = @"Better Luck Next Time..";
-        }
-    
+        message = won ? @"Congratulations!!" : @"Better Luck Next Time..";
     } else {
-        if (won) {
-            message = [NSString stringWithFormat:@"Congratulations \n %@ Wins!!", p1Name];
-        } else {
-            message = [NSString stringWithFormat:@"Congratulations \n %@ Wins!!", p2Name];
-        }
+        message = [NSString stringWithFormat:@"%@ Wins!!", won ? p1Name : p2Name];
     }
     
     CGSize winSize = [[CCDirector sharedDirector] winSize];
@@ -1048,6 +1060,11 @@ Qi *qi = nil;
     Piece *p = [[Piece alloc] init];
     CCNode *pp = [p createSprite: (won ? player1Sprite : player2Sprite)];
     pp.position = ccp(winSize.width/2 - 80, winSize.height/2 + 40);
+    if (puzzleMode && IS_IPHONE4) {
+        pp.position = ccp(winSize.width/2 - 80, winSize.height/2 + 80);
+        winLabel.position = ccp(winSize.width/2, winSize.height/2 + 95);
+    }
+    
     [self addChild:pp z: 10];
     [p jump:5];
     
@@ -1068,6 +1085,9 @@ Qi *qi = nil;
     CCLabelTTF *expLabel = [CCLabelTTF labelWithString:expMsg fontName:@"Vanilla Whale" fontSize:42];
     expLabel.color = ccc3(50,25,10);
     expLabel.position = ccp(winSize.width/2, winSize.height/2 + 20);
+    if (puzzleMode && IS_IPHONE4) {
+        expLabel.position = ccp(winSize.width/2, winSize.height/2 + 60);
+    }
     
     if (backgroundColor == 2) {
         winLabel.color = ccc3(250,250,10);
@@ -1121,6 +1141,11 @@ Qi *qi = nil;
         stars.scale = 7.0;
         stars.position = ccp(WINSIZE.width/2 - 100, WINSIZE.height/2 - 110);
         [self addChild: stars z: 5];
+        
+        if (IS_IPHONE4) {
+            stars.position = ccp(WINSIZE.width/2 - 100, WINSIZE.height/2 - 70);
+            buttons.position = ccp(0, 40);
+        }
     }
 }
 
@@ -1137,7 +1162,7 @@ Qi *qi = nil;
             if (currentPuzzle.level + 1 <= 15) {
                 [[CCDirector sharedDirector] replaceScene:[GameLayer sceneFromWorld:currentPuzzle.world AndLevel:(currentPuzzle.level+1)]];
             } else {
-                [[CCDirector sharedDirector] replaceScene:[GameLayer sceneFromWorld:currentPuzzle.world+1 AndLevel:1]];
+                [[CCDirector sharedDirector] replaceScene:[PuzzleLayer sceneWithPageNumber:currentPuzzle.world]];
             }
             break;
         default:
@@ -1252,7 +1277,7 @@ Qi *qi = nil;
     
     if (puzzleMode) {
         exp = [p1Score.text intValue];
-        int diff = turns - 1 - currentPuzzle.turns;
+        int diff = turns - currentPuzzle.turns;
         
         if (diff > 0) {
             if (diff <= 1.5 * currentPuzzle.turns) {

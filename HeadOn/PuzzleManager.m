@@ -123,9 +123,9 @@ static PuzzleManager *sharedPuzzleManager = nil;
 }
 
 - (void) initiatePuzzles {
-//    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"1-1"]) {
-//        return;
-//    }
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"1-1"]) {
+        return;
+    }
     
     for (int world = 1; world <= 4; world++) {
         for (int level = 1; level <= 15; level++) {
@@ -193,8 +193,8 @@ static PuzzleManager *sharedPuzzleManager = nil;
                 }
                 case 6: {
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"1", @"0", nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"0", @"0", nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"0", @"0", nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"1", @"0", nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"0", @"2", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"2", @"2", @"0", nil]];
                     
                     puz.turns = 2;
@@ -260,11 +260,11 @@ static PuzzleManager *sharedPuzzleManager = nil;
                     break;
                 }
                 case 14: {
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"2", @"0", @"0", nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"1", @"1", nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"2", @"0", @"2", nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"1", @"0", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"2", @"1", @"0", @"0", nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"0", @"2", nil]];
-                    puz.turns = 2;
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"1", @"0", nil]];
+                    puz.turns = 3;
                     break;
                 }
                 case 15: {
@@ -288,11 +288,11 @@ static PuzzleManager *sharedPuzzleManager = nil;
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"2", @"0", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"1", @"0", nil]];
                     
-                    puz.turns = 2;
+                    puz.turns = 3;
                     break;
                 }
                 case 2: {
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"0", @"1", nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"2", @"0", @"1", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"1", @"2", @"1", @"0", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"0", @"0", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"2", @"0", @"0", nil]];
@@ -355,10 +355,10 @@ static PuzzleManager *sharedPuzzleManager = nil;
                     break;
                 }
                 case 9: {
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"2", @"1", @"0", nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"0", @"0", nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"2", @"1", @"0", nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"0", @"0", nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"2", @"0", @"0", @"0", nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"2", @"0", @"1", @"1", nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"2", @"0", @"1", @"0", nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"1", @"0", @"0", @"0", nil]];
                     
                     puz.turns = 3;
                     break;
@@ -391,12 +391,12 @@ static PuzzleManager *sharedPuzzleManager = nil;
                     break;
                 }
                 case 13: {
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"2", @"2", @"0", @"0", nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"2", @"0", @"0", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"2", @"1", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"2", @"1", @"0", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"1", @"0", nil]];
                     
-                    puz.turns = 4;
+                    puz.turns = 3;
                     break;
                 }
                 case 14: {
@@ -410,8 +410,8 @@ static PuzzleManager *sharedPuzzleManager = nil;
                 }
                 case 15: {
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"2", @"0", nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"0", @"2", nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"1", @"0", @"0", @"0", nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"1", @"2", nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"1", @"2", @"0", @"0", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"1", @"0", nil]];
                     
                     puz.turns = 3;
@@ -484,7 +484,7 @@ static PuzzleManager *sharedPuzzleManager = nil;
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"2", @"0", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"1", @"0", nil]];
                     
-                    puz.turns = 4;
+                    puz.turns = 5;
                     break;
                 }
                 case 8: {
@@ -502,7 +502,7 @@ static PuzzleManager *sharedPuzzleManager = nil;
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"2", @"1", @"1", @"0", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"1", @"0", @"0", @"2", nil]];
                     
-                    puz.turns = 4;
+                    puz.turns = 6;
                     break;
                 }
                 case 10: {
@@ -529,14 +529,14 @@ static PuzzleManager *sharedPuzzleManager = nil;
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"1", @"0", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"0", @"1", nil]];
                     
-                    puz.turns = 5;
+                    puz.turns = 6;
                     break;
                 }
                 case 13: {
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"2", @"0", @"2", @"0", nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"2", @"0", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"1", @"2", @"0", @"0", nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"1", @"0", nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"0", @"1", nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"2", @"0", @"1", nil]];
                     
                     puz.turns = 5;
                     break;
@@ -600,8 +600,8 @@ static PuzzleManager *sharedPuzzleManager = nil;
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"0", @"0", @"0",nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"1", @"1", @"0",nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"2", @"0", @"1", @"0",nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"2", @"0", @"2",nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"0", @"0", @"0",nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"2", @"0", @"0",nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"0", @"0", @"2",nil]];
                     
                     puz.turns = 2;
                     break;
@@ -617,13 +617,14 @@ static PuzzleManager *sharedPuzzleManager = nil;
                     break;
                 }
                 case 6: {
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"0", @"0", @"0",nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"1", @"0", @"0",nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"2", @"1", @"0",nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"1", @"0", @"0", @"2", @"0",nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"2", @"0", @"0",nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"2", @"0", @"0",nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"2", @"0", @"0",nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"1", @"2", @"0",nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"1", @"1", @"2",nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"0", @"0", @"0",nil]];
                     
                     puz.turns = 2;
+
                     break;
                 }
                 case 7: {
@@ -643,7 +644,7 @@ static PuzzleManager *sharedPuzzleManager = nil;
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"1", @"2", @"0",nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"2", @"0", @"0",nil]];
                     
-                    puz.turns = 3;
+                    puz.turns = 4;
                     break;
                 }
                 case 9: {
@@ -653,7 +654,7 @@ static PuzzleManager *sharedPuzzleManager = nil;
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"1", @"1", @"0",nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"1", @"0", @"0",nil]];
                     
-                    puz.turns = 2;
+                    puz.turns = 3;
                     break;
                 }
                 case 10: {
@@ -670,18 +671,18 @@ static PuzzleManager *sharedPuzzleManager = nil;
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"1", @"0", @"0",nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"2", @"2", @"1", @"0", @"1",nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"0", @"1", @"0",nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"0", @"2", @"0",nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"2", @"2", @"0",nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"0", @"0", @"0",nil]];
                     
                     puz.turns = 3;
                     break;
                 }
                 case 12: {
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"2", @"0", @"0",nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"2", @"0", @"0",nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"1", @"2", @"0",nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"1", @"1", @"2",nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"0", @"0", @"0",nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"0", @"0", @"0",nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"1", @"0", @"0",nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"2", @"1", @"0",nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"1", @"0", @"0", @"2", @"0",nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"2", @"0", @"0",nil]];
                     
                     puz.turns = 2;
                     break;
@@ -698,7 +699,7 @@ static PuzzleManager *sharedPuzzleManager = nil;
                 }
                 case 14: {
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"2", @"0", @"0",nil]];
-                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"2", @"0", @"0", @"2", @"1",nil]];
+                    [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"0", @"2", @"1",nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"2", @"1", @"0",nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"1", @"1", @"0", @"0",nil]];
                     [board addObject:[[NSMutableArray alloc] initWithObjects:@"0", @"0", @"0", @"1", @"0",nil]];

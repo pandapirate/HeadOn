@@ -20,7 +20,7 @@
     int backgroundColor;
     int edgeLength, blobHeight1, blobHeight2;
     int startX, startY, deltaX, deltaY;
-    UILabel *p1Score, *p2Score;
+    UILabel *p1Score, *p2Score, *turnLabel;
     CCSprite *currentPlayerMarker, *currentPieceGlow;
     NSString *p1Name, *p2Name;
     int player1Sprite, player2Sprite;
@@ -29,7 +29,6 @@
     PFObject *GameObject;
     Piece *p1Sprite, *p2Sprite;
     CGPoint p1AvatarSpot, p2AvatarSpot;
-    CCLabelTTF *turnLabel;
     Puzzle *currentPuzzle;
 }
 

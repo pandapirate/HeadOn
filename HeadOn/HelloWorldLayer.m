@@ -76,8 +76,8 @@
             }
             
             if ([[NSUserDefaults standardUserDefaults] boolForKey:@"toReview"]) {
-                UIAlertView *commentAlert = [[UIAlertView alloc] initWithTitle:@"Like the app?" message:@"" delegate:self cancelButtonTitle:@"Never Review" otherButtonTitles:@"Rate Us", nil];
-                [commentAlert addButtonWithTitle:@"Remind me later"];
+                UIAlertView *commentAlert = [[UIAlertView alloc] initWithTitle:@"Rate Head On?" message:@"Your ★★★★★ ratings and comments are very important to us." delegate:self cancelButtonTitle:@"No" otherButtonTitles:@"Yes", nil];
+                [commentAlert addButtonWithTitle:@"Later"];
                 commentAlert.tag = 2;
                 [commentAlert show];
             }
@@ -189,10 +189,21 @@
         modeLabel.color = ccc3(50, 25, 5);
         [classicMenu addChild:modeLabel z:2];
         
-        CCMenuItem *onePlayer = [self createPopupMenuItem:   @"      Solo      " atPosition:ccp(boardSize.width/2, boardSize.height/2 + 52) withSelector:@selector(singlePlayer)];
-        CCMenuItem *twoPlayer = [self createPopupMenuItem:   @"   Head to Head   " atPosition:ccp(boardSize.width/2, boardSize.height/2 + 1) withSelector:@selector(twoPlayer)];
-        CCMenuItem *multiPlayer = [self createPopupMenuItem: @"    Resume Saved    " atPosition:ccp(boardSize.width/2, boardSize.height/2 - 51) withSelector:@selector(goToResumeLocal)];
-        CCMenuItem *cancelPlayer = [self createPopupMenuItem:@"     Cancel     " atPosition:ccp(boardSize.width/2, boardSize.height/2 - 108) withSelector:@selector(cancelPopup)];
+        CCMenuItem *onePlayer = [self createPopupMenuItem:   @"Solo" atPosition:ccp(boardSize.width/2, boardSize.height/2 + 52) withSelector:@selector(singlePlayer)];
+//        [onePlayer setContentSize:CGSizeMake(board.boundingBox.size.width, onePlayer.boundingBox.size.height)];
+        
+        CCMenuItem *twoPlayer = [self createPopupMenuItem:   @"Head to Head" atPosition:ccp(boardSize.width/2, boardSize.height/2 + 1) withSelector:@selector(twoPlayer)];
+        CCMenuItem *multiPlayer = [self createPopupMenuItem: @"Resume Saved" atPosition:ccp(boardSize.width/2, boardSize.height/2 - 51) withSelector:@selector(goToResumeLocal)];
+        CCMenuItem *cancelPlayer = [self createPopupMenuItem:@"Cancel" atPosition:ccp(boardSize.width/2, boardSize.height/2 - 108) withSelector:@selector(cancelPopup)];
+        
+        localCountSprite = [[CCSprite alloc] initWithFile:@"Badge.png"];
+        localCountSprite.position = ccp(boardSize.width/2 + 110, boardSize.height/2 - 42);
+        [classicMenu addChild:localCountSprite z: 3];
+        localCountSprite.scale = 2;
+        
+        localCountLabel = [[CCLabelTTF alloc] initWithString:@"0" fontName:@"Helvetica" fontSize:12];
+        localCountLabel.position = ccp(localCountSprite.contentSize.width/2, localCountSprite.contentSize.height/2);
+        [localCountSprite addChild:localCountLabel z: 3];
         
         CCMenu *popMenu = [CCMenu menuWithItems:onePlayer, twoPlayer, multiPlayer, cancelPlayer, nil];
         popMenu.position = CGPointZero;
@@ -227,6 +238,22 @@
         [multiMenu addChild:mMenu z:2];
         [self addChild:multiMenu z:10];
         
+        requestCountSprite = [[CCSprite alloc] initWithFile:@"Badge.png"];
+        requestCountSprite.position = ccp(boardSize.width/2 + 110, boardSize.height/2 + 10);
+        [multiMenu addChild:requestCountSprite z: 3];
+        requestCountSprite.scale = 2;
+        
+        requestCountLabel = [[CCLabelTTF alloc] initWithString:@"0" fontName:@"Helvetica" fontSize:12];
+        requestCountLabel.position = ccp(requestCountSprite.contentSize.width/2, requestCountSprite.contentSize.height/2);
+        [requestCountSprite addChild:requestCountLabel z: 3];
+        
+        multiCountSprite = [[CCSprite alloc] initWithFile:@"Badge.png"];
+        multiCountSprite.position = ccp(boardSize.width/2 + 110, boardSize.height/2 - 42);
+        [multiMenu addChild:multiCountSprite z: 3];
+        multiCountSprite.scale = 2;
+        multiCountLabel = [[CCLabelTTF alloc] initWithString:@"0" fontName:@"Helvetica" fontSize:12];
+        multiCountLabel.position = ccp(multiCountSprite.contentSize.width/2, multiCountSprite.contentSize.height/2);
+        [multiCountSprite addChild:multiCountLabel z: 3];
         
         // Tutorial Menu
         tutorialMenu = [[CCNode alloc] init];
@@ -255,8 +282,7 @@
         tutMenu.position = CGPointZero;
         [tutorialMenu addChild:tutMenu z:2];
         [self addChild:tutorialMenu z:10];
-        
-        
+                
         // Random Walkers
         [self runAction:[CCRepeatForever actionWithAction:[CCSequence actions:[CCDelayTime actionWithDuration:(arc4random() % 3 + 1)],[CCCallBlock actionWithBlock:^{
             [self addRandomWalker];
@@ -281,9 +307,10 @@
 }
 
 - (CCMenuItem *) createPopupMenuItem: (NSString *) text atPosition: (CGPoint) p withSelector: (SEL) sel{
-    CCLabelTTF *temp = [CCLabelTTF labelWithString:text fontName:@"Vanilla Whale" fontSize:42];
+    CCLabelTTF *temp = [CCLabelTTF labelWithString:text  fontName:@"Vanilla Whale" fontSize:42];
+    CCLabelTTF *newLabel = [CCLabelTTF labelWithString:text fontName:@"Vanilla Whale" fontSize:42 dimensions:CGSizeMake(300, 50) hAlignment:CCTextAlignmentCenter vAlignment:CCVerticalTextAlignmentMiddle];
     temp.color = ccc3(50, 25, 5);
-    CCMenuItem *tempMenu = [CCMenuItemLabel itemWithLabel:temp target:self selector:sel];
+    CCMenuItem *tempMenu = [CCMenuItemLabel itemWithLabel:newLabel target:self selector:sel];
     tempMenu.position = p;
     
     return tempMenu;
@@ -381,6 +408,18 @@
 - (void) goToPlay {
     CGSize size = [[CCDirector sharedDirector] winSize];
     [classicMenu runAction:[CCMoveTo actionWithDuration:0.5 position:ccp(size.width/2-150, classicMenu.position.y)]];
+    
+    // Badges
+    localCount = [self loadResumeCount:YES];
+    
+    if (localCount == 0)
+        localCountSprite.visible = NO;
+    else {
+        localCountSprite.visible = YES;
+        [localCountLabel setString:[NSString stringWithFormat:@"%i", localCount]];
+    }
+
+    
     play.isEnabled = NO;
     puzzles.isEnabled = NO;
     multiplayer.isEnabled = NO;
@@ -399,6 +438,25 @@
 - (void) goToMultiplayer{
     CGSize size = [[CCDirector sharedDirector] winSize];
     [multiMenu runAction:[CCMoveTo actionWithDuration:0.5 position:ccp(size.width/2-150, multiMenu.position.y)]];
+    
+    // Badges
+    multiCount = [self loadResumeCount:NO];
+    requestCount = [self loadRequestCount];
+        
+    if (multiCount == 0)
+        multiCountSprite.visible = NO;
+    else {
+        multiCountSprite.visible = YES;
+        [multiCountLabel setString:[NSString stringWithFormat:@"%i", multiCount]];
+    }
+    
+    if (requestCount == 0)
+        requestCountSprite.visible = NO;
+    else {
+        requestCountSprite.visible = YES;
+        [requestCountLabel setString:[NSString stringWithFormat:@"%i", requestCount]];
+    }
+    
     play.isEnabled = NO;
     puzzles.isEnabled = NO;
     multiplayer.isEnabled = NO;
@@ -534,6 +592,56 @@
                 break;
         }
     }
+}
+
+- (int) loadResumeCount: (BOOL) local {
+    int counter = 0;
+    if (local) {
+        NSString *gameName = @"";
+        int gameNum = 1;
+        while (true) {
+            gameName = [NSString stringWithFormat:@"Game%i", gameNum];
+            
+            NSData *encodedGame = [[NSUserDefaults standardUserDefaults] objectForKey:gameName];
+            if (encodedGame) {
+                counter++;
+            } else if (gameNum > 10) {
+                break;
+            }
+            gameNum++;
+        }
+    } else {
+        
+        if ([[GameLogic sharedGameLogic] networkReachable]) {
+            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"Player1 = %@ OR Player2 = %@", [GameLogic sharedGameLogic].playerData, [GameLogic sharedGameLogic].playerData];
+            PFQuery *gameQuery = [PFQuery queryWithClassName:@"Game" predicate:predicate];
+            [gameQuery includeKey:@"Player1"];
+            [gameQuery includeKey:@"Player2"];
+            [gameQuery whereKey:@"CanStart" equalTo:[NSNumber numberWithBool:YES]];
+            [gameQuery whereKey:@"Ended" equalTo:[NSNumber numberWithBool:NO]];
+            counter += [gameQuery countObjects];
+        }
+    }
+    
+    return counter;
+}
+
+- (int) loadRequestCount {
+    PFObject *curData = [GameLogic sharedGameLogic].playerData;
+
+    if (curData == NULL)
+        return 0;
+    
+    if ([[GameLogic sharedGameLogic] networkReachable]) {
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"Player2 = %@", curData];
+        PFQuery *query = [PFQuery queryWithClassName:@"Game" predicate:predicate];
+        [query whereKey:@"CanStart" equalTo:[NSNumber numberWithBool:NO]];
+        [query whereKey:@"Ended" equalTo:[NSNumber numberWithBool:NO]];
+        
+        return [query countObjects];
+    }
+    
+    return 0;
 }
 
 #pragma mark GameKit delegate

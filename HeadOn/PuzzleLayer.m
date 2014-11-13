@@ -174,10 +174,9 @@
             break;
     }
     
-// TODO: Lock
-//    if (![[PuzzleManager sharedPuzzleManager] isLevelEnabledForWorld:num AndLevel:1]) {
-//        return;
-//    }
+    if (![[PuzzleManager sharedPuzzleManager] isLevelEnabledForWorld:num AndLevel:1]) {
+        return;
+    }
     
     UITouch *touch = [touches anyObject];
     CGPoint finalLocation = [self convertTouchToNodeSpace:touch];

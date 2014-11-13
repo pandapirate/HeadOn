@@ -118,8 +118,7 @@
                     stars.position = ccp(0,0);
                     [item addChild:stars];
                 } else {
-                    // TODO: Lock
-                    // item.isEnabled = NO;
+                    item.isEnabled = NO;
                 }
             }
         }

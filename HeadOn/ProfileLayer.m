@@ -8,7 +8,7 @@
 
 #import "ProfileLayer.h"
 #import "GameLogic.h"
-#import <Parse/Parse.h>
+#import "PuzzleManager.h"
 
 @implementation ProfileLayer
 + (CCScene *) scene {
@@ -85,10 +85,10 @@
         [editBtn addTarget:self action:@selector(changeName) forControlEvents:UIControlEventTouchUpInside];
         [[[CCDirector sharedDirector] view] addSubview:editBtn];
         
-        [self generateLabelWithText:@"Classic Game" atPosition:CGRectMake(15, 210, 200, 30) withSize:40 andTag:1];
+        [self generateLabelWithText:@"Classic Game:" atPosition:CGRectMake(15, 210, 200, 30) withSize:40 andTag:1];
         
-        [self generateLabelWithText:@"Local  Wins/Losses:" atPosition:CGRectMake(40, 240, 200, 30) withSize:32 andTag:1];
-        [self generateLabelWithText:@"Online Wins/Losses:" atPosition:CGRectMake(40, 270, 200, 30) withSize:32 andTag:1];
+        [self generateLabelWithText:@"Local  Wins/Losses:" atPosition:CGRectMake(25, 240, 200, 30) withSize:32 andTag:1];
+        [self generateLabelWithText:@"Online Wins/Losses:" atPosition:CGRectMake(25, 270, 200, 30) withSize:32 andTag:1];
                 
         int localTotal = [[NSUserDefaults standardUserDefaults] integerForKey:@"Local_Total"];
         int localWins = [[GCHelper sharedInstance] totalWins];
@@ -101,13 +101,41 @@
         if (![[GameLogic sharedGameLogic] networkReachable])
             onlineStat = @"N/A";
         
-        [self generateLabelWithText:localStat atPosition:CGRectMake(250, 240, 80, 30) withSize:32 andTag:10];
-        [self generateLabelWithText:onlineStat atPosition:CGRectMake(250, 270, 100, 30) withSize:32 andTag:11];
-               
-        CCMenu *startMenu = [CCMenu menuWithItems:admin, nil];
-        startMenu.tag = 123;
-        startMenu.position = CGPointZero;
-        [self addChild:startMenu];
+        [self generateLabelWithText:localStat atPosition:CGRectMake(235, 240, 115, 30) withSize:32 andTag:10];
+        [self generateLabelWithText:onlineStat atPosition:CGRectMake(235, 270, 115, 30) withSize:32 andTag:11];
+        
+        
+        // Puzzle Labels
+        [self generateLabelWithText:@"Puzzles:" atPosition:CGRectMake(15, 310, 200, 30) withSize:40 andTag:1];
+        
+        //[self generateLabelWithText:@"Completion:" atPosition:CGRectMake(40, 340, 200, 30) withSize:32 andTag:1];
+        
+        CCNode *starDrawing = [[PuzzleManager sharedPuzzleManager] drawStars:3];
+        starDrawing.position = ccp(117, 190);
+        if (IS_IPHONE4) {
+            starDrawing.position = ccp(117, 100);
+        }
+        
+        starDrawing.scale = 3.0;
+        [self addChild:starDrawing];
+        
+        [self generateLabelWithText:@"High Score:" atPosition:CGRectMake(110, 370, 200, 30) withSize:32 andTag:1];
+        
+        int stars = [[PuzzleManager sharedPuzzleManager] calculateStarsForWorld:1];
+        stars += [[PuzzleManager sharedPuzzleManager] calculateStarsForWorld:2];
+        stars += [[PuzzleManager sharedPuzzleManager] calculateStarsForWorld:3];
+        stars += [[PuzzleManager sharedPuzzleManager] calculateStarsForWorld:4];
+        
+        int score = [[PuzzleManager sharedPuzzleManager] calculatePointForWorld:1];
+        score += [[PuzzleManager sharedPuzzleManager] calculatePointForWorld:2];
+        score += [[PuzzleManager sharedPuzzleManager] calculatePointForWorld:3];
+        score += [[PuzzleManager sharedPuzzleManager] calculatePointForWorld:4];
+        
+        NSString *starsLabel = [NSString stringWithFormat:@"%i/%i", stars, 180];
+        NSString *scoresLabel = [NSString stringWithFormat:@"%i", score];
+        
+        [self generateLabelWithText:starsLabel atPosition:CGRectMake(235, 340, 115, 30) withSize:32 andTag:10];
+        [self generateLabelWithText:scoresLabel atPosition:CGRectMake(235, 370, 115, 30) withSize:32 andTag:11];
     }
     return self;
 }
